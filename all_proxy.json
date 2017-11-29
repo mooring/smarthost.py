@@ -1,0 +1,12 @@
+{
+    "game.weixin.qq.com": [
+        {
+            "request" : "/en_US/js/",
+            "replace" : "~/iWorks/bizwapjscdn"
+        },
+        {
+            "request" : "/zh_CN/js/",
+            "replace" : "~/iWorks/bizwapjscdn"
+        }
+    ]
+}

@@ -1,0 +1,6 @@
+{
+    "game.weixin.qq.com" : {
+        "matches"  : ["key1","key2","key3"],
+        "is_query" : 1
+    }
+}

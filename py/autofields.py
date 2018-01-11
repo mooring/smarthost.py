@@ -2,7 +2,7 @@
 #Example: mitmproxy -s "~/.mitmproxy/py/autofields.py ~/.mitmproxy/auto_fields.json" --port 8080
 #Author : mooring 2017/12/26 21:08PM
 
-import re, mimetypes, time, argparse, json
+import re, mimetypes, time, argparse, json, urllib
 from os                 import path, mkdir, sep
 from mitmproxy.http     import HTTPResponse
 from mitmproxy          import ctx
@@ -70,12 +70,13 @@ class AutoFields:
             elif len(rule['values']) == len(match):
                 vals = self.reuse_header[_host]['values']
                 for k, v in enumerate(match):
+                    val = urllib.quote(vals[k].encode('utf-8'))
                     if rule['is_query'] == 1:
                         if _url.find(v +'=') >- 1:
-                            _url = re.sub(r''.join([v,'=[^&]*?']), _url, r'%s=%s<1>' % (v,vals[k]))
+                            _url = re.sub(r''.join([v,'=[^&]*?']), _url, r'%s%s<1>' % (v,val))
                         else:
                             flag = '&' if _url.find('?') != -1 else '?';
-                            _url += '%s%s=%s' % (flag, v, vals[k])
+                            _url += '%s%s=%s' % (flag, v, val)
                     else:
                         req.request.headers[v] = vals[k]
                 if rule['is_query'] == 1: 

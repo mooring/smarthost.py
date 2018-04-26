@@ -199,20 +199,20 @@ class Smarthost:
         header['Pragma']         = 'no-store, max-age=0'
         header['Cache-Control']  = 'no-store, max-age=0'
         header["Connection"]     = "close"
-        header["Server"]         = "Smarthost/1.0.0.2 for mitmproxy/2.0.2 - by mooring"
+        header["Server"]         = "Smarthost/1.0.0.3 for mitmproxy/2.0.2 - by mooring"
         header["Content-Length"] = str(size)
         if content_type is not None: header['Content-type'] = content_type
-        return header            
-        
+        return header
+
 
 smarthost = Smarthost()
 
 def load(l):
     l.add_option('smarthost', str, '', 'auto reply path map')
-    smarthost.parse_local_map_rule()
 
 def request(flow):
     smarthost.flow_count += 1
+    smarthost.parse_local_map_rule()
     smarthost.route_proxy(flow)
 
 

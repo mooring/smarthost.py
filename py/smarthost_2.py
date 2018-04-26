@@ -68,8 +68,8 @@ class Smarthost:
             self.log(conf_file + ' not exists')
             return;
         for _host in confs:
-            if _host == 'author' or _host == 'comments' : pass
             items = confs[_host]
+            if _host == 'author' or _host == 'comments' : pass
             for conf in items:
                 _resp                  = re.sub(r'^~', home, conf['replace'])
                 _abspath               = path.abspath(_resp) + sep
@@ -129,7 +129,7 @@ class Smarthost:
                 if match in pathname:
                     local_file   = rule[match] + pathname.replace('/', sep).replace(match, '', 1).lstrip(sep)
                     #process hash filename like my_program_xxxxxx.js to local_file my_program_.js'
-                    striped_file = re.sub(r'[a-f0-9]{6}\.(js|css|jpg|png|jpeg|gif)$', r'.\1', local_file)
+                    striped_file = re.sub(r'[a-f0-9]{6}\.(js|css|jpg|png|jpeg|gif|json)$', r'.\1', local_file)
                     if path.isfile(local_file) or path.isfile(striped_file):
                         if path.exists(striped_file): local_file = striped_file
                         content_type  = mimetypes.guess_type(local_file)[0]

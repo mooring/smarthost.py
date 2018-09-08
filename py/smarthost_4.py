@@ -1,12 +1,12 @@
-#Usage  : -s "smarthost.py map_config.json"
-#Example: mitmproxy -s "smarthost.py /path/to/request/map/config.json" --port 8080
-#Author : mooring 2017/11/29 09:08AM
+#Usage: mitmproxy -s "~/.mitmproxy/py/smarthost_4.py" --port 8080
+#Author : mooring 2018/9/08 18:08AM
 
 import re, mimetypes, time, json, ipaddress
 from os                 import path, mkdir, sep
 from mitmproxy.http     import HTTPResponse
 from mitmproxy          import ctx
 from mitmproxy.net.http import Headers
+import mitmproxy.ctx
 
 
 LOG_TO_FILE, FLOW_LIST_MAX_NUMBER = False, 3000
@@ -29,12 +29,13 @@ class Smarthost:
         if _host == 'config.qq.com':
             self.server_smarthost(flow)
         else:
+            
             if src_ip in self.remote_rule:
-                self.remote_proxy_tamper(flow, src_ip)   #;self.log('fall in remote_rule')
+                self.remote_proxy_tamper(flow, src_ip) #;self.log('fall in remote_rule')
             elif _host in self.local_rule:
-                self.map_local_file(flow)                #;self.log('fall in local_rule')
+                self.map_local_file(flow)              #;self.log('fall in local_rule')
             else:
-                self.map_local_file(flow)                #;self.log('default to map_local')
+                self.map_local_file(flow)              #;self.log('fall in map_local')
 
     def remote_proxy_tamper(self, flow, src_ip):
         if flow.live:
@@ -59,6 +60,7 @@ class Smarthost:
         self.local_rule['config.qq.com'] = {'/': self.directory + 'web' + sep}
 
     def parse_local_map_rule(self):
+        #self.log(ctx.options.smarthost)
         if len(ctx.options.smarthost) < 1: return
         confs     = {}
         home      = path.expanduser('~')
@@ -73,8 +75,10 @@ class Smarthost:
             for conf in items:
                 _resp                  = re.sub(r'^~', home, conf['replace'])
                 _abspath               = path.abspath(_resp) + sep
+                #self.log('11, _host=%s, _abspath=%s, _resp=%s' %(_host, _abspath, _resp))
                 self.local_rule[_host] = self.local_rule[_host] if _host in self.local_rule else {}
                 if len(conf['request']) > 0 and path.isdir(_abspath):
+                    #self.log('12, %s=_%s' % (conf['request'], _abspath) )
                     self.local_rule[_host][conf['request']] = _abspath
 
     def server_smarthost(self, flow):
@@ -131,7 +135,8 @@ class Smarthost:
                     local_file   = rule[match] + pathname.replace('/', sep).replace(match, '', 1).lstrip(sep)
                     cgi_json     = '%s.json' % local_file
                     #process hash filename like my_program_xxxxxx.js to local_file my_program_.js'
-                    striped_file = re.sub(r'[a-f0-9]{6}\.(js|css|jpg|png|jpeg|gif|json)$', r'.\1', local_file)
+                    striped_file = re.sub(r'[a-f0-9]{6,10}\.(js|css|jpg|png|jpeg|gif|json)$', r'.\1', local_file)
+                    #self.log('139, %s' % striped_file)
                     if path.isfile(local_file) or path.isfile(striped_file) or path.isfile(cgi_json):
                         if path.exists(striped_file): local_file = striped_file
                         content_type  = mimetypes.guess_type(local_file)[0]
@@ -160,7 +165,7 @@ class Smarthost:
             if not path.exists(_path): mkdir(_path, 755)
             open(_path + _file, 'a+').writelines(_str + '\n')
         else:
-            ctx.log.warn(_str)
+            ctx.log.info(_str)
 
     @staticmethod
     def redirect_https_to_http(flow):
@@ -205,22 +210,32 @@ class Smarthost:
         return header
 
 
+
 smarthost = Smarthost()
 
-def load(l):
-    l.add_option('smarthost', str, '', 'auto reply path map')
 
+def load(loader):
+    loader.add_option(
+        'smarthost', 
+        str, 
+        '', 
+        'auto reply path map'
+    )
+    smarthost.parse_local_map_rule();
+    
 def request(flow):
     smarthost.flow_count += 1
-    smarthost.parse_local_map_rule()
+    smarthost.parse_local_map_rule();
     smarthost.route_proxy(flow)
 
 
 def response(flow):
     cnt = smarthost.flow_count
-
     if cnt > FLOW_LIST_MAX_NUMBER:
         smarthost.flow_count = 0
         ctx.master.view.clear_not_marked()
     elif len(ctx.master.view):
         ctx.master.view.focus.index = len(ctx.master.view) - 1
+
+
+

@@ -144,10 +144,16 @@ class Smarthost:
                             local_file   = cgi_json
                             content_type = 'application/json'
                         if content_type is None: break
-                        body          = str(open(local_file).read()).encode('utf-8')
-                        header        = self.custom_header(_host, content_type, len(body))
-                        _response     = HTTPResponse(b"HTTP/1.1", 200, "local", header, body, is_replay=True)
-                        flow.response = _response
+                        if content_type.startswith('image'):
+                            body          = open(local_file, 'rb').read()
+                            header        = self.custom_header(_host, content_type, len(body))
+                            flow.response = HTTPResponse(b"HTTP/1.1", 200, "local", header, b' ', is_replay=True)
+                            flow.response.content  = body
+                        else:
+                            body          = str(open(local_file).read()).encode('utf-8')
+                            header        = self.custom_header(_host, content_type, len(body))
+                            _response     = HTTPResponse(b"HTTP/1.1", 200, "local", header, body, is_replay=True)
+                            flow.response = _response
                         self.log("\n%s\n%s\nReplied with Local File:\n%s\n%s\n%s\n" % (flow.request.path, '='*80, '-'*80, local_file, "-"*80))
                         break
                     elif _host == 'config.qq.com':
